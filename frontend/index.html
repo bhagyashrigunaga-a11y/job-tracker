@@ -5,145 +5,387 @@
 
 <style>
 body {
-  font-family: Arial;
-  background-color: #f4f6f8;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: url("https://images.unsplash.com/photo-1519389950473-47ba0277781c") no-repeat center center fixed;
+  background-size: cover;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+
+#loginBox {
+  width: 300px;
+  margin: 120px auto;
   padding: 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  border-radius: 10px;
+  text-align: center;
 }
 
 .container {
-  max-width: 600px;
-  margin: auto;
-  background: white;
+  width: 650px;
+  margin: 40px auto;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-h2, h3 {
-  text-align: center;
+  color: white;
 }
 
 input, select {
   width: 100%;
-  padding: 8px;
-  margin: 5px 0 10px 0;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: none;
 }
 
 button {
-  padding: 6px 10px;
-  margin: 3px;
-  border: none;
-  background-color: #007bff;
+  background: #4f46e5;
   color: white;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  margin: 5px;
   cursor: pointer;
-  border-radius: 5px;
 }
 
-button:hover {
-  background-color: #0056b3;
-}
-
-li {
-  background: #eef2f7;
-  margin: 5px 0;
+.card {
+  background: rgba(255,255,255,0.15);
   padding: 10px;
-  border-radius: 5px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+#notify {
+  background: yellow;
+  color: black;
+  padding: 8px;
+  border-radius: 8px;
+  display:none;
+}
+
+.dashboard {
+  display:flex;
+  gap:10px;
+}
+
+.box {
+  flex:1;
+  background: rgba(255,255,255,0.2);
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+}
+.dark {
+  background: #0f172a !important;
+}
+
+.dark .container {
+  background: rgba(15, 23, 42, 0.9);
+  color: white;
+}
+
+.dark input, 
+.dark select {
+  background: #1e293b;
+  color: white;
+}
+
+.dark .card {
+  background: #1e293b;
+}
+
+.dark .box {
+  background: #1e293b;
+}
+
+.dark #loginBox {
+  background: rgba(15, 23, 42, 0.9);
 }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
 <body>
 
-<div class="container">
+<div id="loginBox">
+<h3>Login</h3>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
 
-<h2>Job Application Tracker</h2>
+<div class="container" id="app" style="display:none;">
 
-<h3>Add Job</h3>
+<button onclick="toggleDark()">Dark Mode</button>
 
-<input id="company" placeholder="Company">
-<input id="role" placeholder="Role">
-<input id="status" placeholder="Status">
-<input id="date" placeholder="Date">
+<div id="notify"></div>
+
+<h2>Job Tracker</h2>
+
+<canvas id="chart" height="150"></canvas>
+
+<div class="dashboard">
+<div class="box">Applied: <span id="appliedCount">0</span></div>
+<div class="box">Selected: <span id="selectedCount">0</span></div>
+<div class="box">Rejected: <span id="rejectedCount">0</span></div>
+</div>
+
+<select id="company" onchange="updateRoles()">
+<option>Select Company</option>
+<option>Google</option><option>Amazon</option><option>Microsoft</option>
+<option>Meta</option><option>Apple</option><option>Infosys</option>
+<option>TCS</option><option>Wipro</option><option>Accenture</option>
+<option>IBM</option><option>Oracle</option><option>Deloitte</option>
+<option>Capgemini</option><option>HCL</option><option>Adobe</option>
+<option>Flipkart</option><option>Paytm</option><option>Zoho</option>
+<option>Byjus</option><option>Swiggy</option><option>Uber</option>
+<option>Netflix</option><option>Samsung</option><option>Intel</option>
+<option>Nvidia</option>
+</select>
+
+<select id="role"></select>
+
+<select id="status">
+<option>Applied</option>
+<option>Interview</option>
+<option>Selected</option>
+<option>Rejected</option>
+</select>
+
+<input id="date" type="date">
 
 <button onclick="addJob()">Add Job</button>
 
-<h3>Filter by Status</h3>
+<input id="search" placeholder="Search" onkeyup="loadJobs()">
 
 <select id="filter" onchange="loadJobs()">
-  <option value="">All</option>
-  <option value="Applied">Applied</option>
-  <option value="Interview">Interview</option>
-  <option value="Rejected">Rejected</option>
+<option value="">All</option>
+<option>Applied</option>
+<option>Selected</option>
+<option>Rejected</option>
 </select>
 
-<h3>All Jobs</h3>
-<ul id="list"></ul>
+<select id="sort" onchange="loadJobs()">
+<option value="">Sort</option>
+<option value="asc">Old</option>
+<option value="desc">New</option>
+</select>
+
+<button onclick="exportCSV()">Download CSV</button>
+
+<h3>Jobs</h3>
+<div id="list"></div>
+
+<div id="updateSection" style="display:none;">
+<h3>Update</h3>
+<select id="u_company"></select>
+<select id="u_role"></select>
+<select id="u_status">
+<option>Applied</option>
+<option>Interview</option>
+<option>Selected</option>
+<option>Rejected</option>
+</select>
+<input id="u_date" type="date">
+<button onclick="saveUpdate()">Save</button>
+<button onclick="closeUpdate()">Cancel</button>
+</div>
 
 </div>
 
 <script>
-async function addJob() {
-  await fetch("http://localhost:5000/jobs/add", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      company: document.getElementById("company").value,
-      role: document.getElementById("role").value,
-      status: document.getElementById("status").value,
-      date: document.getElementById("date").value
+
+let chart;
+let currentId=null;
+
+function login(){
+  if(username.value && password.value){
+    loginBox.style.display="none";
+    app.style.display="block";
+    loadJobs();
+  }
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
+
+const roles=[
+"SDE","Frontend","Backend","Full Stack","Data Analyst","Data Scientist",
+"ML Engineer","Cloud","DevOps","QA","Security","Android","iOS",
+"UI/UX","Product Manager","Business Analyst","System Engineer",
+"Network Engineer","DBA","AI Engineer"
+];
+
+function updateRoles(){
+  role.innerHTML="";
+  roles.forEach(r=>role.innerHTML+=`<option>${r}</option>`);
+}
+
+async function addJob(){
+  await fetch("http://localhost:5000/jobs/add",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      company:company.value,
+      role:role.value,
+      status:status.value,
+      date:date.value
     })
   });
   loadJobs();
 }
 
-async function loadJobs() {
+async function loadJobs(){
   const res = await fetch("http://localhost:5000/jobs");
-  const data = await res.json();
+  let data = await res.json();
 
-  const filter = document.getElementById("filter").value;
-
-  const list = document.getElementById("list");
   list.innerHTML = "";
 
-  data
-    .filter(job => filter === "" || job.status === filter)
-    .forEach(job => {
-      const li = document.createElement("li");
+  let a=0, s=0, r=0;
+  let notifyArr = [];
 
-      li.innerHTML =
-        job.company + " - " + job.role + " - " + job.status +
-        " <br>" +
-        " <button onclick=\"updateJob('" + job._id + "')\">Update</button>" +
-        " <button onclick=\"deleteJob('" + job._id + "')\">Delete</button>";
+  const today = new Date().toISOString().split("T")[0];
 
-      list.appendChild(li);
+  // GET VALUES
+  const searchVal = document.getElementById("search").value.toLowerCase();
+  const filterVal = document.getElementById("filter").value;
+  const sortVal = document.getElementById("sort").value;
+
+  // FILTER
+  let filtered = data.filter(j =>
+    j.company.toLowerCase().includes(searchVal) &&
+    (filterVal === "" || j.status === filterVal)
+  );
+
+  // SORT
+  if(sortVal === "asc"){
+    filtered.sort((a,b)=> new Date(a.date) - new Date(b.date));
+  }
+  if(sortVal === "desc"){
+    filtered.sort((a,b)=> new Date(b.date) - new Date(a.date));
+  }
+
+  // LOOP
+  filtered.forEach(j => {
+
+    if(j.status==="Applied") a++;
+    if(j.status==="Selected") s++;
+    if(j.status==="Rejected") r++;
+
+    let diff = (new Date(j.date) - new Date())/(1000*60*60*24);
+
+    if(j.date===today) notifyArr.push("Today: " + j.company);
+    if(diff>0 && diff<=2) notifyArr.push("Soon: " + j.company);
+
+    list.innerHTML += `
+    <div class="card">
+    <b>${j.company}</b><br>
+    ${j.role} - ${j.status}<br>
+    ${j.date}<br>
+    <button onclick="edit('${j._id}')">Update</button>
+    <button onclick="del('${j._id}')">Delete</button>
+    </div>`;
+  });
+
+  appliedCount.innerText = a;
+  selectedCount.innerText = s;
+  rejectedCount.innerText = r;
+
+  // NOTIFY
+  if(notifyArr.length){
+    notify.style.display = "block";
+    notify.innerHTML = notifyArr.join("<br>");
+  } else {
+    notify.style.display = "none";
+  }
+
+  // CHART
+  if(chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("chart"),{
+    type:"bar",
+    data:{
+      labels:["Applied","Selected","Rejected"],
+      datasets:[{data:[a,s,r]}]
+    }
+  });
+}
+async function del(id){
+  await fetch("http://localhost:5000/jobs/"+id,{method:"DELETE"});
+  loadJobs();
+}
+
+async function edit(id){
+  currentId=id;
+  updateSection.style.display="block";
+
+  const res=await fetch("http://localhost:5000/jobs");
+  const data=await res.json();
+  const j=data.find(x=>x._id===id);
+
+  u_company.innerHTML=company.innerHTML;
+  u_company.value=j.company;
+
+  u_role.innerHTML=roles.map(r=>`<option>${r}</option>`).join("");
+  u_role.value=j.role;
+
+  u_status.value=j.status;
+  u_date.value=j.date;
+}
+
+async function saveUpdate(){
+  await fetch("http://localhost:5000/jobs/"+currentId,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      company:u_company.value,
+      role:u_role.value,
+      status:u_status.value,
+      date:u_date.value
+    })
+  });
+  updateSection.style.display="none";
+  loadJobs();
+}
+
+function closeUpdate(){
+  updateSection.style.display="none";
+}
+
+function exportCSV(){
+  fetch("http://localhost:5000/jobs")
+  .then(res=>res.json())
+  .then(data=>{
+    let csv="Company,Role,Status,Date\n";
+    data.forEach(j=>{
+      csv+=`${j.company},${j.role},${j.status},${j.date}\n`;
     });
-}
-
-async function deleteJob(id) {
-  await fetch("http://localhost:5000/jobs/" + id, {
-    method: "DELETE"
+    const blob=new Blob([csv]);
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="jobs.csv";
+    a.click();
   });
-  loadJobs();
 }
 
-async function updateJob(id) {
-  const company = prompt("Enter company");
-  const role = prompt("Enter role");
-  const status = prompt("Enter status");
-  const date = prompt("Enter date");
+updateRoles();
 
-  await fetch("http://localhost:5000/jobs/" + id, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ company, role, status, date })
-  });
-
-  loadJobs();
-}
-
-loadJobs();
 </script>
 
 </body>
