@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Job Tracker</title>
+
+<style>
+body {
+  font-family: Arial;
+  background-color: #f4f6f8;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h2, h3 {
+  text-align: center;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 10px 0;
+}
+
+button {
+  padding: 6px 10px;
+  margin: 3px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+li {
+  background: #eef2f7;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Job Application Tracker</h2>
+
+<h3>Add Job</h3>
+
+<input id="company" placeholder="Company">
+<input id="role" placeholder="Role">
+<input id="status" placeholder="Status">
+<input id="date" placeholder="Date">
+
+<button onclick="addJob()">Add Job</button>
+
+<h3>Filter by Status</h3>
+
+<select id="filter" onchange="loadJobs()">
+  <option value="">All</option>
+  <option value="Applied">Applied</option>
+  <option value="Interview">Interview</option>
+  <option value="Rejected">Rejected</option>
+</select>
+
+<h3>All Jobs</h3>
+<ul id="list"></ul>
+
+</div>
+
+<script>
+async function addJob() {
+  await fetch("http://localhost:5000/jobs/add", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      company: document.getElementById("company").value,
+      role: document.getElementById("role").value,
+      status: document.getElementById("status").value,
+      date: document.getElementById("date").value
+    })
+  });
+  loadJobs();
+}
+
+async function loadJobs() {
+  const res = await fetch("http://localhost:5000/jobs");
+  const data = await res.json();
+
+  const filter = document.getElementById("filter").value;
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data
+    .filter(job => filter === "" || job.status === filter)
+    .forEach(job => {
+      const li = document.createElement("li");
+
+      li.innerHTML =
+        job.company + " - " + job.role + " - " + job.status +
+        " <br>" +
+        " <button onclick=\"updateJob('" + job._id + "')\">Update</button>" +
+        " <button onclick=\"deleteJob('" + job._id + "')\">Delete</button>";
+
+      list.appendChild(li);
+    });
+}
+
+async function deleteJob(id) {
+  await fetch("http://localhost:5000/jobs/" + id, {
+    method: "DELETE"
+  });
+  loadJobs();
+}
+
+async function updateJob(id) {
+  const company = prompt("Enter company");
+  const role = prompt("Enter role");
+  const status = prompt("Enter status");
+  const date = prompt("Enter date");
+
+  await fetch("http://localhost:5000/jobs/" + id, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ company, role, status, date })
+  });
+
+  loadJobs();
+}
+
+loadJobs();
+</script>
+
+</body>
+</html>
