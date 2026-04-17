@@ -352,12 +352,12 @@ function closeModal(){
 jobForm.addEventListener("submit", async e=>{
   e.preventDefault();
 
- const job={
-  company:company.value,
-  role:role.value,
-  status:status.value,
-  date:date.value,
-  notes:document.getElementById("notes").value
+const job={
+  company: document.getElementById("company").value,
+  role: document.getElementById("role").value,
+  status: document.getElementById("status").value,
+  date: document.getElementById("date").value,
+  notes: document.getElementById("notes").value
 };
 
 showToast("Saved");
@@ -395,6 +395,7 @@ async function deleteJob(id){
 async function loadJobs(){
   const res=await fetch("/jobs");
  let data=await res.json();
+ console.log(data);
 
 const search = document.getElementById("searchInput").value.toLowerCase();
 const filter = document.getElementById("filterStatus").value;
@@ -415,7 +416,7 @@ if(sort==="new"){
 
 data.forEach(j=>{
 
-  let status = j.status || "Pending";
+  let status = j.status;
 
   if(!j.company.toLowerCase().includes(search) &&
      !j.role.toLowerCase().includes(search)) return;
